@@ -1,7 +1,7 @@
 #ifndef STYLES_H
 #define STYLES_H
 
-const char* STYLES_CSS = R"rawliteral(
+const char *STYLES_CSS = R"rawliteral(
 html,
 body {
   box-sizing: border-box;
@@ -111,31 +111,35 @@ h3 {
 }
 
 .offline,
-.blocked {
+.blocked,
+.delayed {
   color: rgb(255, 0, 0);
   background-color: rgb(100, 20, 20);
 }
 
 .online,
-.standby {
+.running {
   color: rgb(0, 255, 0);
   background-color: rgb(47, 100, 20);
 }
 
-.inactive {
+.inactive, .unknown {
   color: rgb(109, 113, 109);
   background-color: rgb(55, 55, 55);
 }
 
-.visible {
+.visible, 
+.standby{
   color: rgb(3, 120, 255);
   background-color: rgb(9, 8, 63);
 }
 
 .exposure,
-.calibrating {
-  color: rgb(255, 243, 8);
-  background-color: rgb(118, 111, 9);
+.calibrating,
+.waiting,
+.paused {
+  color: #fff308;
+  background-color: #766f09;
 }
 
 /* BUTTONS */
@@ -147,6 +151,15 @@ h3 {
   background-color: #43a047;
 }
 
+.yellow-btn {
+  background-color:#bfb30a;
+}
+
+.yellow-btn:hover {
+  background-color: #fff308;
+}
+
+
 .red-btn {
   background-color: #d32f2f;
 }
@@ -156,7 +169,8 @@ h3 {
 }
 
 .green-btn,
-.red-btn {
+.red-btn, 
+.yellow-btn {
   flex: 1 1 50px;
   max-height: 30px;
   padding: 0px;
@@ -216,4 +230,4 @@ input[type="number"]:focus {
 
 )rawliteral";
 
-#endif  // STYLES_H
+#endif // STYLES_H

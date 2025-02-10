@@ -35,28 +35,24 @@ const char *INDEX_HTML_TEMPLATE = R"rawliteral(
     <div class="box">
       <div class="title">Computer Vision</div>
       <div class="row">
-        <span class="label-status">AWS:</span>
-        <span class="status visible" id="aws">visible</span>
+        <span class="label-status">Gen:</span>
+        <span class="status unknown" id="generator">unknown</span>
       </div>
       <div class="row">
-        <span class="label-status">MU:</span>
-        <span class="status exposure" id="generator">exposure</span>
-      </div>
-      <div class="row">
-        <span class="label-status">MCU:</span>
-        <span class="status standby" id="fpd">standby</span>
+        <span class="label-status">FPD:</span>
+        <span class="status unknown" id="fpd">unknown</span>
+        <span class="status unknown" id="calibration">unknown</span>
       </div>
     </div>
 
     <!-- Panel Manual-->
-    <div class="box" id="panel-manual">
+    <div class="box mode" id="panel-manual">
       <div class="title">Control manual por tiempo</div>
       <div class="box-wrap">
         <span>Disparos: </span>
         <button
-          id="button-short"
           class="counter-button"
-          onclick="updateVariable('count', 1)"
+          onclick="updateVariable('contador', 1)"
         >
           1
         </button>
@@ -64,14 +60,13 @@ const char *INDEX_HTML_TEMPLATE = R"rawliteral(
           type="number"
           min="1"
           max="44"
-          id="input-count"
+          id="input-contador"
           class="counter"
           value="44"
         />
         <button
-          id="button-largo"
           class="counter-button"
-          onclick="updateVariable('count', 44)"
+          onclick="updateVariable('contador', 44)"
         >
           44
         </button>
@@ -108,23 +103,42 @@ const char *INDEX_HTML_TEMPLATE = R"rawliteral(
 
       <div class="box-wrap">
         <span>Pausa entre disparos [secs]:</span>
-        <input type="number" min="5" max="600" id="input-pause" value="30" />
+        <input type="number" min="5" max="600" id="input-pausa" value="30" />
       </div>
+    </div>
 
+    <!-- Panel Control-->
+    <div class="box">
+      <div class="title">Panel de control</div>
       <div class="box-wrap">
         <span>Status handswitch:</span>
-        <span class="status exposure" id="handswitch">exposure</span>
+        <span class="status unknown" id="handswitch">unknown</span>
       </div>
 
       <div class="box-wrap">
-        <button class="green-btn" onclick="updateVariable('bot', 'STARTED')">
-          &#9658;
+        <span>Status bot:</span>
+        <span class="status unknown" id="bot">unknown</span>
+      </div>
+
+      <div class="box-wrap">
+        <span>Modo:</span>
+        <span class="status" id="modo">Manual</span>
+      </div>
+      
+      <div class="box-wrap">
+        <button class="green-btn" onclick="handleClick('play')">
+          &#9205;
         </button>
-        <button class="red-btn" onclick="updateVariable('bot', 'STOPPED')">
+        <button class="yellow-btn" onclick="handleClick('pausa')">
+          &#9208;
+        </button>
+        <button class="red-btn" onclick="handleClick('stop')">
           &#9209;
         </button>
       </div>
     </div>
+
+
     <script src="script.js"></script>
   </body>
 </html>

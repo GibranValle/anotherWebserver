@@ -1,0 +1,16 @@
+BasedOnStyle: Google
+IndentWidth: 2
+ColumnLimit: 120  # ✅ Aumenta el ancho de línea permitido antes de forzar un salto
+BreakBeforeBraces: Attach  # ✅ Llaves en la misma línea que la declaración
+AllowShortFunctionsOnASingleLine: Empty  # ✅ Solo permite funciones vacías en una línea
+BinPackParameters: false  # ✅ Evita que los parámetros de funciones se empaqueten en una sola línea
+BinPackArguments: false  # ✅ Evita que los argumentos de llamadas a funciones se empaqueten en una sola línea
+PointerAlignment: Right  # ✅ Punteros y referencias alineados a la derecha (tipo *nombre)
+SpaceAfterTemplateKeyword: true  # ✅ Espacio después de 'template<...>'
+AlignConsecutiveAssignments: true  # ✅ Alinea variables con el mismo operador '='
+AlignConsecutiveDeclarations: true  # ✅ Alinea declaraciones de variables consecutivas
+AlignAfterOpenBracket: Align
+AlignTrailingComments: true  # ✅ Alinea los comentarios finales de línea
+SortIncludes: false  # ✅ No reordena las inclusiones automáticamente
+ReflowComments: false  # ✅ Evita la reformateación automática de comentarios largos
+NamespaceIndentation: Inner  # ✅ Indentación dentro de espacios de nombres

@@ -1,135 +1,78 @@
 #ifndef WEBSERVERHANDLER_H
 #define WEBSERVERHANDLER_H
 
-#include <WiFi.h>
+#include <DNSServer.h>
 #include <ESPAsyncWebServer.h>
-#include <AsyncWebSocket.h>
+#include <WiFi.h>
+
+#include "GlobalVariables.h"
+#include "WebSocketHandler.h"
+
+// Incluye los archivos HTML, CSS y JS
 #include "html.h"
-#include "styles.h"
 #include "script.h"
+#include "styles.h"
 
-#include <ArduinoJson.h>
-
-// Configuración del Access Point
 #define AP_SSID "ESP32_AP"
 #define AP_PASSWORD "12345678"
 
-// Declarar el WebSocket como externo
-extern AsyncWebSocket ws;
+class WebServerHandler {
+ private:
+  AsyncWebServer   server;
+  GlobalVariables& globals;
+  DNSServer        dnsServer;
+  WebSocketHandler wsHandler;
 
-// Clase para manejar el servidor web
-class WebServerHandler
-{
-private:
-  AsyncWebServer server; // Servidor web
+  static WebServerHandler* instance;
 
-  // Callback para mensajes del WebSocket
-  static void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
-                               AwsEventType type, void *arg, uint8_t *data, size_t len)
-  {
-    if (type == WS_EVT_CONNECT)
-    {
-      Serial.printf("Cliente WebSocket conectado, ID: %u\n", client->id());
-      JsonDocument doc;
-      doc["mensaje"] = "Bienvenido al WebSocket";
-      doc["estado"] = "exitoso";
-
-      String jsonString;
-      serializeJson(doc, jsonString);
-      client->text(jsonString);
-    }
-    else if (type == WS_EVT_DISCONNECT)
-    {
-      Serial.printf("Cliente WebSocket desconectado, ID: %u\n", client->id());
-    }
-    else if (type == WS_EVT_DATA)
-    {
-      // Recibe el mensaje del cliente
-      String message = "";
-      for (size_t i = 0; i < len; i++)
-      {
-        message += (char)data[i];
-      }
-      JsonDocument doc;
-      String parsedMessage;
-      DeserializationError error = deserializeJson(doc, message);
-
-      if (error)
-      {
-        Serial.printf("Error al parsear JSON: %s\n", error.c_str());
-        client->text("{\"error\":\"Formato JSON inválido\"}");
-        return;
-      }
-
-      Serial.printf("Mensaje recibido: %s\n", message.c_str());
-
-      if (doc.containsKey("varName") && doc.containsKey("value"))
-      {
-        JsonDocument doc2;
-        doc2["varName"] = doc["varName"];
-        doc2["value"] = doc["value"];
-        String jsonString;
-        serializeJson(doc, jsonString);
-        // Envía una respuesta al cliente
-        client->text(jsonString);
-      }
-    }
+  // ✅ Redirección de peticiones desconocidas al portal cautivo
+  static void handleRedirect(AsyncWebServerRequest* request) {
+    request->redirect("http://192.168.4.1");
   }
 
-public:
-  WebServerHandler() : server(80) {}
+ public:
+  WebServerHandler(GlobalVariables& globals) : server(80), globals(globals), wsHandler(globals) {
+    instance = this;
+  }
 
-  void begin()
-  {
-    // Configura el Access Point
-    bool apStarted = WiFi.softAP(AP_SSID, AP_PASSWORD);
+  void begin() {
+    WiFi.softAP(AP_SSID, AP_PASSWORD);
+    WiFi.softAPConfig(IPAddress(192, 168, 4, 1), IPAddress(192, 168, 4, 1), IPAddress(255, 255, 255, 0));
 
-    if (apStarted)
-    {
-      Serial.println("Punto de acceso iniciado");
-      Serial.print("SSID: ");
-      Serial.println(AP_SSID);
-      Serial.print("Dirección IP: ");
-      Serial.println(WiFi.softAPIP());
-    }
-    else
-    {
-      Serial.println("Error al iniciar el punto de acceso");
-    }
+    // ✅ Configuración del servidor DNS para Captive Portal
+    dnsServer.start(53, "*", WiFi.softAPIP());
 
-    // Ruta para servir la página HTML
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-              { request->send(200, "text/html", INDEX_HTML_TEMPLATE); });
+    // ✅ Servir archivos HTML, CSS y JS
+    server.on(
+        "/", HTTP_GET, [](AsyncWebServerRequest* request) { request->send(200, "text/html", INDEX_HTML_TEMPLATE); });
+    server.on(
+        "/styles.css", HTTP_GET, [](AsyncWebServerRequest* request) { request->send(200, "text/css", STYLES_CSS); });
+    server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest* request) {
+      request->send(200, "application/javascript", SCRIPT_JS);
+    });
 
-    // Ruta para servir los estilos CSS
-    server.on("/styles.css", HTTP_GET, [](AsyncWebServerRequest *request)
-              { request->send(200, "text/css", STYLES_CSS); });
+    server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest* request) { request->send(204); });
 
-    // Ruta para servir el script JavaScript
-    server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request)
-              { request->send(200, "application/javascript", SCRIPT_JS); });
+    // ✅ Redirección para Captive Portal
+    server.onNotFound(handleRedirect);
 
-    // SIN CONTENIDO
-    server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest *request)
-              { request->send(204); });
+    // ✅ Conectar WebSocket al servidor
+    wsHandler.attachToServer(server);
 
-    // Configura el WebSocket
-    ws.onEvent(onWebSocketEvent); // Registra el callback de eventos
-    server.addHandler(&ws);       // Agrega el WebSocket al servidor
-
-    // Inicia el servidor web
     server.begin();
     Serial.println("Servidor web iniciado");
   }
 
-  // Maneja las conexiones WebSocket
-  void loop()
-  {
-    ws.cleanupClients(); // Limpia clientes desconectados
+  void loop() {
+    wsHandler.loop();                // Mantener WebSockets activos
+    dnsServer.processNextRequest();  // Procesar peticiones DNS
+  }
+
+  WebSocketHandler& getWebSocketHandler() {
+    return wsHandler;
   }
 };
 
-// Inicializa el WebSocket como una variable global
-AsyncWebSocket ws("/ws");
+WebServerHandler* WebServerHandler::instance = nullptr;
 
-#endif // WEBSERVERHANDLER_H
+#endif  // WEBSERVERHANDLER_H
