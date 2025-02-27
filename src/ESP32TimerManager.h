@@ -4,32 +4,27 @@
 #include <Arduino.h>
 #include <ESP32TimerInterrupt.h>
 
-class ESP32TimerManager
-{
-private:
-  ESP32Timer timer;    // Instancia del temporizador
-  bool timerActive;    // Estado del temporizador (activo/inactivo)
-  uint32_t intervalUs; // Intervalo del temporizador en microsegundos
+class ESP32TimerManager {
+ private:
+  ESP32Timer timer;        // Instancia del temporizador
+  bool       timerActive;  // Estado del temporizador (activo/inactivo)
+  uint32_t   intervalUs;   // Intervalo del temporizador en microsegundos
 
   // Función ISR asignada al temporizador
-  static bool IRAM_ATTR defaultISR(void *arg)
-  {
+  static bool IRAM_ATTR defaultISR(void *arg) {
     Serial.println("Temporizador activado (ISR predeterminado)");
     return true;
   }
 
-public:
+ public:
   // Constructor
-  ESP32TimerManager(uint8_t timerNumber)
-      : timer(timerNumber), timerActive(false), intervalUs(0) {}
+  ESP32TimerManager(uint8_t timerNumber) : timer(timerNumber), timerActive(false), intervalUs(0) {}
 
   // Configura el temporizador
-  bool begin(uint32_t intervalMs, bool (*isrCallback)(void *) = defaultISR)
-  {
-    intervalUs = intervalMs * 1000; // Convertir a microsegundos
+  bool begin(uint32_t intervalMs, bool (*isrCallback)(void *) = defaultISR) {
+    intervalUs = intervalMs * 1000;  // Convertir a microsegundos
 
-    if (timer.attachInterruptInterval(intervalUs, isrCallback))
-    {
+    if (timer.attachInterruptInterval(intervalUs, isrCallback)) {
       Serial.print(F("Temporizador iniciado en intervalo: "));
       Serial.print(intervalMs);
       Serial.println(F(" ms"));
@@ -42,10 +37,8 @@ public:
   }
 
   // Detiene el temporizador
-  void stop()
-  {
-    if (timerActive)
-    {
+  void stop() {
+    if (timerActive) {
       timer.stopTimer();
       timerActive = false;
       Serial.println(F("Temporizador detenido."));
@@ -53,10 +46,8 @@ public:
   }
 
   // Reinicia el temporizador
-  void restart()
-  {
-    if (!timerActive)
-    {
+  void restart() {
+    if (!timerActive) {
       timer.restartTimer();
       timerActive = true;
       Serial.println(F("Temporizador reiniciado."));
@@ -64,25 +55,29 @@ public:
   }
 
   // Cambia el intervalo del temporizador
-  void setInterval(uint32_t intervalMs)
-  {
+  bool setInterval(uint32_t intervalMs, bool (*isrCallback)(void *) = defaultISR) {
     intervalUs = intervalMs * 1000;
-    if (timerActive)
-    {
-      timer.stopTimer();
-      timer.attachInterruptInterval(intervalUs, defaultISR);
-      timer.restartTimer();
+    if (timerActive) timer.stopTimer();
+    if (timer.attachInterruptInterval(intervalUs, isrCallback)) {
+      Serial.print(F("Intervalo actualizado a: "));
+      Serial.print(intervalMs);
+      Serial.println(F(" ms"));
+      timerActive = true;
+      return true;
     }
-    Serial.print(F("Intervalo actualizado a: "));
-    Serial.print(intervalMs);
-    Serial.println(F(" ms"));
+    Serial.println(F("Error al configurar el temporizador."));
+    return false;
+  }
+
+  uint32_t getInterval() {
+    uint32_t intervalMs = intervalUs / 1000;
+    return intervalMs;
   }
 
   // Destructor
-  ~ESP32TimerManager()
-  {
+  ~ESP32TimerManager() {
     stop();
   }
 };
 
-#endif // ESP32TIMERMANAGER_H
+#endif  // ESP32TIMERMANAGER_H

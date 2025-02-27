@@ -27,6 +27,7 @@ socket.onopen = () => {
 };
 
 socket.onmessage = (event) => {
+  console.log("message in")
   const data = JSON.parse(event.data);
   if (!data) return;
   const {varName, value} = data
@@ -34,14 +35,13 @@ socket.onmessage = (event) => {
   if (varName in variables) {
     variables[varName] = numericKeys.includes(varName) ? parseInt(value) : value;
   } 
+  console.log("updating ui");
   updateUI();
 };
 // FUNCIONES DE SOCKET
 
 function handleClick(button){
-  console.log(button);
   bot = variables.bot;
-  console.log(bot);
   if(button === "play"){
     if(["paused", "waiting", "standby"].includes(bot)){
       updateVariable("bot", "running");
@@ -63,7 +63,6 @@ function handleClick(button){
 
 function updateVariable(varName, value) {
   if (varName in variables){
-    variables.varName = value;
     const payload = JSON.stringify({ varName, value });
     console.log("sending socket ", payload);
     socket.send(payload);
@@ -76,60 +75,27 @@ document.addEventListener("DOMContentLoaded", () => {
   const inputCount= document.getElementById("input-contador");
 
   if (inputPause && inputDelay && inputCount) {
-    inputPause.addEventListener("blur", handleBlurPause);
-    inputDelay.addEventListener("blur", handleBlurDelay);
-    inputCount.addEventListener("blur", handleBlurCount);
+    inputPause.addEventListener("blur", handleBlur);
+    inputDelay.addEventListener("blur", handleBlur);
+    inputCount.addEventListener("blur", handleBlur);
   }}
 );
 
-async function handleBlurPause(event) {
-  const { value, id} = event.target;
+async function handleBlur(event) {
+  const { value, id, min, max} = event.target;
   const numericValue = Number(value);
-  const inputPauseElem = document.getElementById("input-pausa");
+  const element = document.getElementById(id);
+  const varName = id.replace("input-", "");
 
+  const minimum = parseInt(min);
+  const maximum = parseInt(max);
+
+  let newValue = numericValue;
   // Validar que el valor esté en el rango permitido
-  if (numericValue < 5 || numericValue > 600) {
-    let newValue = 0;
-    if(numericValue < 5) newValue = 5;
-    if(numericValue > 600) newValue = 600;
-    inputPauseElem.value = newValue;
-    return;
-  }
-  updateVariable(pausa, numericValue)
-}
-
-async function handleBlurDelay(event) {
-  const { value } = event.target;
-  const numericValue = Number(value);
-  const inputDelayElem = document.getElementById("input-delay");
-
-  // Validar que el valor esté en el rango permitido
-  if (numericValue < 5 || numericValue > 600) {
-    let newValue = 0;
-    if(numericValue < 5) newValue = 5;
-    if(numericValue > 600) newValue = 600;
-    inputDelayElem.value = newValue;
-    return;
-  }
-  updateVariable(delay, numericValue)
-}
-
-async function handleBlurCount(event) {
-  const { value } = event.target;
-  const numericValue = Number(value);
-  const inputCountElem = document.getElementById("input-contador");
-
-  // Validar que el valor esté en el rango permitido
-  if (numericValue < 45 || numericValue > 0) {
-    let newValue = 0;
-    if(numericValue < 1) newValue = 1;
-    if(numericValue > 44) newValue = 44;
-    inputCountElem.value = newValue;
-    return;
-  }
-  updateVariable(contador, numericValue)
-}
-
+  if(numericValue < minimum) newValue = minimum;
+  if(numericValue > maximum) newValue = maximum;
+  updateVariable(varName, newValue.toString());
+};
 
 function updateUI() {
   // MODIFICA INPUTS SIN MODIFICAR CLASES

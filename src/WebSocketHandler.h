@@ -21,13 +21,28 @@ class WebSocketHandler {
     WebSocketHandler* handler = instance;
 
     if (type == WS_EVT_CONNECT) {
-      Serial.printf("Cliente WebSocket conectado, ID: %u\n", client->id());
-      String message = "Websocket connected";
-      String varName = "";
-      String value   = "";
+      //Serial.printf("Cliente WebSocket conectado, ID: %u\n", client->id());
+      int    connected = handler->getConnectedClientsCount();
+      String message   = "Websocket connected";
+      String varName   = "wifi";
+      String value     = OFFLINE;
+      if (connected > 0) value = ONLINE;
       client->text(serialize(message, varName, value));
+      handler->globals.updateVariable(varName, value);
+
+      varName = "handswitch";
+      value   = "standby";
+      client->text(serialize(message, varName, value));
+      handler->globals.updateVariable(varName, value);
+
     } else if (type == WS_EVT_DISCONNECT) {
-      Serial.printf("Cliente WebSocket desconectado, ID: %u\n", client->id());
+      int    connected = handler->getConnectedClientsCount();
+      String message   = "Websocket disconnected";
+      String varName   = "wifi";
+      String value     = OFFLINE;
+      if (connected == 0) value = OFFLINE;
+      client->text(serialize(message, varName, value));
+      //Serial.printf("Cliente WebSocket desconectado, ID: %u\n", client->id());
     } else if (type == WS_EVT_DATA) {
       String message = "";
       for (size_t i = 0; i < len; i++) {
@@ -69,6 +84,17 @@ class WebSocketHandler {
 
   void loop() {
     ws.cleanupClients();
+  }
+
+  int getConnectedClientsCount() {
+    int count = 1;
+    for (uint8_t i = 0; i < ws.count(); ++i) {
+      AsyncWebSocketClient* client = ws.client(i);
+      if (client && client->status() == WS_CONNECTED) {
+        count++;
+      }
+    }
+    return count;
   }
 };
 

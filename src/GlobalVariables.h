@@ -1,7 +1,6 @@
 #ifndef GLOBALVARIABLES_H
 #define GLOBALVARIABLES_H
 
-#include "DisplayHandler.h"
 #include <map>
 
 // Definiciones para valores de estado
@@ -29,8 +28,6 @@
 
 class GlobalVariables {
  private:
-  DisplayHandler &display;
-
   // Variables de conexión y estado
   std::map<String, String> variables{
       {"serial", OFFLINE},
@@ -45,10 +42,10 @@ class GlobalVariables {
       {"duration", SHORT}};
 
   // Variables numéricas
-  std::map<String, short> numVariables{{"pausa", 30}, {"retraso", 0}, {"contador", 1}, {"total", 1}};
+  std::map<String, int> numVariables{{"pausa", 30}, {"retraso", 0}, {"contador", 1}, {"total", 1}};
 
  public:
-  GlobalVariables(DisplayHandler &display) : display(display) {}
+  GlobalVariables() {}
 
   /**
    * @brief Verifica si el valor proporcionado es válido para la variable dada.
@@ -111,18 +108,20 @@ class GlobalVariables {
     }
   }
 
-  void showMainFrame() {
-    String wifi        = variables.at("wifi");
-    String serial      = variables.at("serial");
-    String bot         = variables.at("bot");
-    String handswitch  = variables.at("handswitch");
-    String generator   = variables.at("generator");
-    String fpd         = variables.at("fpd");
-    String calibration = variables.at("calibration");
-    short  exposure    = numVariables.at("count");
-    short  total       = numVariables.at("total");
+  std::map<String, String> getAllVariables() {
+    std::map<String, String> allVars;
 
-    display.mainFrame(wifi, serial, bot, handswitch, generator, fpd, calibration, exposure, total);
+    // Agregar variables de estado (String)
+    for (const auto &pair : variables) {
+      allVars[pair.first] = pair.second;
+    }
+
+    // Agregar variables numéricas (convertidas a String)
+    for (const auto &pair : numVariables) {
+      allVars[pair.first] = String(pair.second);
+    }
+
+    return allVars;
   }
 
   /**
@@ -139,17 +138,6 @@ class GlobalVariables {
       return String(numVariables.at(name));
     }
     return "";
-  }
-
-  /**
-   * @brief Genera una cadena con el estado de las variables principales.
-   *
-   * @return Cadena formateada con los valores de las variables.
-   */
-  String generateDisplayText() const {
-    return String("Generator: ") + variables.at("generator") + "\nFPD: " + variables.at("fpd") +
-           "\nSerial: " + variables.at("serial") + "\nWifi: " + variables.at("wifi") + "\nBot: " + variables.at("bot") +
-           "\nHandswitch: " + variables.at("handswitch") + "\n";
   }
 };
 

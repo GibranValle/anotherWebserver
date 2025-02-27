@@ -52,7 +52,7 @@ const char *INDEX_HTML_TEMPLATE = R"rawliteral(
         <span>Disparos: </span>
         <button
           class="counter-button"
-          onclick="updateVariable('contador', 1)"
+          onclick="updateVariable('contador', '1')"
         >
           1
         </button>
@@ -66,7 +66,7 @@ const char *INDEX_HTML_TEMPLATE = R"rawliteral(
         />
         <button
           class="counter-button"
-          onclick="updateVariable('contador', 44)"
+          onclick="updateVariable('contador', '44')"
         >
           44
         </button>
@@ -98,7 +98,7 @@ const char *INDEX_HTML_TEMPLATE = R"rawliteral(
 
       <div class="box-wrap">
         <span>Retardo 1er disparo[secs]:</span>
-        <input type="number" min="5" max="600" id="input-delay" value="0" />
+        <input type="number" min="0" max="600" id="input-delay" value="0" />
       </div>
 
       <div class="box-wrap">

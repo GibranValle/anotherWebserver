@@ -1,6 +1,8 @@
 #include "esp32-hal.h"
 #ifndef DISPLAYHANDLER_H
 #define DISPLAYHANDLER_H
+#include <iostream>
+#include <string>
 
 #include <Adafruit_GFX.h>
 #include <Adafruit_ST7789.h>
@@ -14,17 +16,17 @@
 #define TFT_RST 4
 #define HEIGHT 135
 #define WIDTH 240
-#define PADDING 10
 #define HALF_X int(WIDTH / 2)
 #define HALF_Y int(HEIGHT / 2)
 
 class DisplayHandler {
  private:
-  Adafruit_ST7789 tft;  // Objeto del display
+  Adafruit_ST7789  tft;  // Objeto del display
+  GlobalVariables &globals;
 
  public:
   // Constructor
-  DisplayHandler() : tft(TFT_CS, TFT_DC, TFT_RST) {}
+  DisplayHandler(GlobalVariables &globals) : tft(TFT_CS, TFT_DC, TFT_RST), globals(globals) {}
 
   // Método para inicializar el display
   void begin() {
@@ -76,34 +78,55 @@ class DisplayHandler {
     tft.println(text);
   }
 
-  void mainFrame(String &wifi,
-                 String &serial,
-                 String &bot,
-                 String &handswitch,
-                 String &generator,
-                 String &fpd,
-                 String &calibration,
-                 short   exposure,
-                 short   total) {
+  void showMainFrame() {
+    std::map<String, String> allVars = globals.getAllVariables();
+
+    String serial       = allVars["serial"];
+    String wifi         = allVars["wifi"];
+    String generator    = allVars["generator"];
+    String fpd          = allVars["fpd"];
+    String handswitch   = allVars["handswitch"];
+    String bot          = allVars["bot"];
+    String calibration  = allVars["calibration"];
+    String calibrations = allVars["calibrations"];
+    String duration     = allVars["duration"];
+    String str_pausa    = allVars["pausa"];
+    String str_retraso  = allVars["retraso"];
+    String str_contador = allVars["contador"];
+    String str_total    = allVars["total"];
+
+    // Convertirlas a int usando toInt()
+    int pausa    = str_pausa.toInt();
+    int retraso  = str_retraso.toInt();
+    int contador = str_contador.toInt();
+    int total    = str_total.toInt();
+
     tft.fillScreen(ST77XX_BLACK);  // Limpiar pantalla
-    tft.setTextSize(3);            // Tamaño del texto
+    tft.setTextSize(2);            // Tamaño del texto
     tft.setRotation(1);            // Configurar orientación
     int variableColor = ST77XX_WHITE;
-    // 1) cuadrante TL
-    tft.setCursor(PADDING, PADDING);
+    // 1) Linea 1 WIFI
+    tft.setCursor(0, 10);
     tft.setTextColor(ST77XX_WHITE);
-    tft.print("Wifi: ");
-    tft.setTextColor(ST77XX_GREEN);
+    tft.print(" Wifi:       ");
+    if (wifi == ONLINE)
+      variableColor = ST77XX_GREEN;
+    else if (wifi == OFFLINE)
+      variableColor = ST77XX_RED;
+    tft.setTextColor(variableColor);
     tft.println(wifi);
-    // serial
-    tft.print("Serial: ");
+    // Linea 2 Serial
+    tft.setTextColor(ST77XX_WHITE);
+    tft.print(" Serial:     ");
     if (serial == ONLINE)
       variableColor = ST77XX_GREEN;
     else if (serial == OFFLINE)
       variableColor = ST77XX_RED;
     tft.setTextColor(variableColor);
     tft.println(serial);
-    tft.print("Agent: ");
+    // Linea 3 Agent
+    tft.setTextColor(ST77XX_WHITE);
+    tft.print(" Agent:      ");
     if (bot == WAITING || bot == PAUSED || bot == DELAYED)
       variableColor = ST77XX_YELLOW;
     else if (bot == STANDBY)
@@ -118,10 +141,9 @@ class DisplayHandler {
       variableColor = ST77XX_RED;
     tft.setTextColor(variableColor);
     tft.println(bot);
-    // 2) cuadrante TR
-    tft.setCursor(HALF_X + PADDING, PADDING);
+    // Linea 4 handswitch
     tft.setTextColor(ST77XX_WHITE);
-    tft.println("Handswitch");
+    tft.print(" Handswitch: ");
     if (handswitch == EXPOSURE)
       variableColor = ST77XX_YELLOW;
     else if (handswitch == STANDBY)
@@ -134,8 +156,9 @@ class DisplayHandler {
       variableColor = ST77XX_RED;
     tft.setTextColor(variableColor);
     tft.println(handswitch);
-    // 3) cuadrante BL
-    tft.setCursor(PADDING, HALF_Y + PADDING);
+    // Linea 5 Generator
+    tft.setTextColor(ST77XX_WHITE);
+    tft.print(" Generator:  ");
     if (generator == EXPOSURE)
       variableColor = ST77XX_YELLOW;
     else if (generator == STANDBY)
@@ -145,13 +168,10 @@ class DisplayHandler {
     else if (generator == BLOCKED || generator == OFFLINE)
       variableColor = ST77XX_RED;
     tft.setTextColor(variableColor);
-    tft.println("Generator");
-    tft.setTextColor(ST77XX_YELLOW);
     tft.println(generator);
-    // 4) cuadrante BR
-    tft.setCursor(HALF_X + PADDING, HALF_Y + PADDING);
+    // Linea 6 FPD
     tft.setTextColor(ST77XX_WHITE);
-    tft.println("FPD");
+    tft.print(" FPD:        ");
     if (fpd == EXPOSURE)
       variableColor = ST77XX_YELLOW;
     else if (fpd == CALIBRATED)
@@ -164,9 +184,33 @@ class DisplayHandler {
       variableColor = ST77XX_RED;
     tft.setTextColor(variableColor);
     tft.println(fpd);
+    // Linea 7 Calibration
+    tft.setTextColor(ST77XX_WHITE);
+    tft.print(" Calib:      ");
+    tft.setTextColor(ST77XX_CYAN);
     tft.println(calibration);
-    tft.printf("%d / %d", exposure, total);
+    // Linea 8 Contador
+    tft.printf("  %d / %d", contador, total);
     ;
+  }
+
+  void showAPInfo() {
+    tft.fillScreen(ST77XX_BLACK);  // Limpiar pantalla
+    tft.setTextSize(2);            // Tamaño del texto
+    tft.setRotation(1);            // Configurar orientación
+    tft.setCursor(0, 10);
+    tft.setTextColor(ST77XX_GREEN);
+    tft.println(" Conectarse a:");
+    tft.setTextColor(ST77XX_WHITE);
+    tft.println(" SSD:    ESP32_AP");
+    tft.println(" PW:     12345678");
+
+    tft.setTextColor(ST77XX_GREEN);
+    tft.println(" Ingresar a:");
+    tft.setTextColor(ST77XX_WHITE);
+    tft.println(" IP:  192.168.4.1");
+    tft.setTextColor(ST77XX_CYAN);
+    tft.println(" Desde el navegador!");
   }
 
   void showArray(const char *elements[], size_t elementCount, const char *color = "info") {

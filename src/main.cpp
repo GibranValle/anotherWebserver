@@ -7,7 +7,7 @@
 #include "WebServerHandler.h"
 #include "utils.h"  // ✅ Ahora importamos utils.h
 
-#define BAUDRATE 9600
+#define BAUDRATE 115200
 #define LED 13
 #define RELAY 12
 
@@ -15,14 +15,18 @@
 ESP32TimerManager timer0(0);
 
 // Instancias globales
-DisplayHandler   display;
-GlobalVariables  globals(display);
+GlobalVariables  globals;
+DisplayHandler   display(globals);
 UARTHandler      uartHandler;
 WebServerHandler webServer(globals);
+
+bool ticked = false;
+bool qr     = true;
 
 // ISR personalizada para el primer temporizador
 bool IRAM_ATTR timer0ISR(void *arg) {
   //Serial.println("timeout");
+  ticked = true;
   return true;
 }
 
@@ -39,18 +43,55 @@ void setup() {
   webServer.begin();
 
   // initial QR before connected device
-  display.drawQR();
+  //display.drawQR();
+  display.showMainFrame();
 }
 
 void loop() {
   webServer.loop();
   uartHandler.handleUART();
 
+  if (ticked) {
+    String wifi = globals.getVariable("wifi");
+
+    if (wifi == ONLINE) {
+      display.showMainFrame();
+      ticked            = false;
+      uint32_t interval = timer0.getInterval();
+      if (interval != 1000) {
+        timer0.stop();
+        timer0.setInterval(1 * 1000, timer0ISR);
+      }
+      return;
+    }
+
+    else if (wifi == OFFLINE) {
+      uint32_t interval = timer0.getInterval();
+      if (interval != 5000) {
+        timer0.stop();
+        timer0.setInterval(5 * 1000, timer0ISR);
+      }
+    }
+
+    if (qr) {
+      display.drawQR();
+      qr     = false;
+      ticked = false;
+      return;
+    }
+
+    if (!qr) {
+      ticked = false;
+      qr     = true;
+      display.showAPInfo();
+      return;
+    }
+  }
+
   // SERIAL LOGIC
   if (uartHandler.hasData()) {
     String command = uartHandler.read();
     command.trim();
-    display.showText(command);
 
     if (command.startsWith("set")) {
       int    splitIdx = command.indexOf(' ');
@@ -61,6 +102,14 @@ void loop() {
 
       webServer.getWebSocketHandler().broadcast(serialize(message, var, value));
       globals.updateVariable(var, value);
+    }
+
+    else if (command.startsWith("getAll")) {
+      std::map<String, String> allVars = globals.getAllVariables();
+      // Ejemplo: imprimir todas las variables
+      for (const auto &pair : allVars) {
+        Serial.println(pair.first + ": " + pair.second);
+      }
     }
 
     else if (command.startsWith("exp")) {
@@ -79,7 +128,6 @@ void loop() {
       globals.updateVariable("bot", EXPOSURE);
       globals.updateVariable("duration", SHORT);
 
-      globals.showMainFrame();
     }
 
     else if (command.startsWith("M")) {
@@ -90,7 +138,6 @@ void loop() {
 
       Serial.println(message);
       globals.updateVariable("duration", MEDIUM);
-      globals.showMainFrame();
     }
 
     else if (command.startsWith("L")) {
@@ -101,7 +148,6 @@ void loop() {
 
       Serial.println(message);
       globals.updateVariable("duration", LONG);
-      globals.showMainFrame();
     }
 
     else if (command.startsWith("X")) {
@@ -113,7 +159,7 @@ void loop() {
 
     else if (command.startsWith("var")) {
       Serial.println("all variables");
-      display.showText(globals.generateDisplayText());
+      display.showMainFrame();
     }
 
     else if (command.startsWith("?")) {
