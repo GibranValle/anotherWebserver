@@ -76,21 +76,21 @@ const char *INDEX_HTML_TEMPLATE = R"rawliteral(
         <button
           id="button-short"
           class="duration-button"
-          onclick="updateVariable('duration', 'short')"
+          onclick="updateVariable('duración', '5')"
         >
           Corto 5s
         </button>
         <button
-          id="button-medio"
+          id="button-medium"
           class="duration-button"
-          onclick="updateVariable('duration', 'medio')"
+          onclick="updateVariable('duración', '15')"
         >
           Medio 15s
         </button>
         <button
-          id="button-largo"
+          id="button-long"
           class="duration-button"
-          onclick="updateVariable('duration', 'largo')"
+          onclick="updateVariable('duración', '330')"
         >
           Largo 5m
         </button>
@@ -144,4 +144,4 @@ const char *INDEX_HTML_TEMPLATE = R"rawliteral(
 </html>
 )rawliteral";
 
-#endif // INDEX_HTML_H
+#endif  // INDEX_HTML_H

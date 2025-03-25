@@ -31,7 +31,7 @@ class DisplayHandler {
   // Método para inicializar el display
   void begin() {
     tft.init(HEIGHT, WIDTH);         // Resolución del display de 1.14"
-    tft.setRotation(1);              // Configurar orientación
+    tft.setRotation(3);              // Configurar orientación
     tft.fillScreen(ST77XX_BLACK);    // Fondo negro
     tft.setTextSize(2);              // Tamaño del texto
     tft.setTextColor(ST77XX_WHITE);  // Color del texto
@@ -79,6 +79,8 @@ class DisplayHandler {
   }
 
   void showMainFrame() {
+    tft.fillScreen(ST77XX_BLACK);  // Limpiar pantalla
+
     std::map<String, String> allVars = globals.getAllVariables();
 
     String serial       = allVars["serial"];
@@ -88,22 +90,19 @@ class DisplayHandler {
     String handswitch   = allVars["handswitch"];
     String bot          = allVars["bot"];
     String calibration  = allVars["calibration"];
-    String calibrations = allVars["calibrations"];
+    int    calibrations = allVars["calibrations"].toInt();
     String duration     = allVars["duration"];
     String str_pausa    = allVars["pausa"];
     String str_retraso  = allVars["retraso"];
     String str_contador = allVars["contador"];
     String str_total    = allVars["total"];
-
     // Convertirlas a int usando toInt()
     int pausa    = str_pausa.toInt();
     int retraso  = str_retraso.toInt();
     int contador = str_contador.toInt();
     int total    = str_total.toInt();
 
-    tft.fillScreen(ST77XX_BLACK);  // Limpiar pantalla
-    tft.setTextSize(2);            // Tamaño del texto
-    tft.setRotation(1);            // Configurar orientación
+    tft.setTextSize(2);  // Tamaño del texto
     int variableColor = ST77XX_WHITE;
     // 1) Linea 1 WIFI
     tft.setCursor(0, 10);
@@ -126,7 +125,7 @@ class DisplayHandler {
     tft.println(serial);
     // Linea 3 Agent
     tft.setTextColor(ST77XX_WHITE);
-    tft.print(" Agent:      ");
+    tft.print(" Agent:     ");
     if (bot == WAITING || bot == PAUSED || bot == DELAYED)
       variableColor = ST77XX_YELLOW;
     else if (bot == STANDBY)
@@ -143,7 +142,7 @@ class DisplayHandler {
     tft.println(bot);
     // Linea 4 handswitch
     tft.setTextColor(ST77XX_WHITE);
-    tft.print(" Handswitch: ");
+    tft.print(" Handswitch:");
     if (handswitch == EXPOSURE)
       variableColor = ST77XX_YELLOW;
     else if (handswitch == STANDBY)
@@ -158,7 +157,7 @@ class DisplayHandler {
     tft.println(handswitch);
     // Linea 5 Generator
     tft.setTextColor(ST77XX_WHITE);
-    tft.print(" Generator:  ");
+    tft.print(" Generator: ");
     if (generator == EXPOSURE)
       variableColor = ST77XX_YELLOW;
     else if (generator == STANDBY)
@@ -171,7 +170,7 @@ class DisplayHandler {
     tft.println(generator);
     // Linea 6 FPD
     tft.setTextColor(ST77XX_WHITE);
-    tft.print(" FPD:        ");
+    tft.print(" FPD:    ");
     if (fpd == EXPOSURE)
       variableColor = ST77XX_YELLOW;
     else if (fpd == CALIBRATED)
@@ -186,7 +185,7 @@ class DisplayHandler {
     tft.println(fpd);
     // Linea 7 Calibration
     tft.setTextColor(ST77XX_WHITE);
-    tft.print(" Calib:      ");
+    tft.print(" Calib:    ");
     tft.setTextColor(ST77XX_CYAN);
     tft.println(calibration);
     // Linea 8 Contador

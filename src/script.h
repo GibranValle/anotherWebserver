@@ -11,10 +11,14 @@ const variables = {
   bot: "standby",
   handswitch: "unknown",
   modo: "manual",
-  duration: "short",
+  duración: 5,
+  duración_actual: 0,
   pausa: 30,
-  delay: 0,
-  contador: 1
+  pausa_actual: 0,
+  retraso: 0,
+  retraso_actual: 0,
+  contador: 1,
+  total: 1,
 };
 
 // FUNCIONES DE SOCKET
@@ -27,15 +31,13 @@ socket.onopen = () => {
 };
 
 socket.onmessage = (event) => {
-  console.log("message in")
   const data = JSON.parse(event.data);
   if (!data) return;
-  const {varName, value} = data
-  const numericKeys = ["pausa", "delay", "contador"];
+  const {message, varName, value} = data
+  const numericKeys = ["pausa", "pausa_actual","retraso","retraso_actual", "contador","duración", "duración_actual", "total"];
   if (varName in variables) {
     variables[varName] = numericKeys.includes(varName) ? parseInt(value) : value;
   } 
-  console.log("updating ui");
   updateUI();
 };
 // FUNCIONES DE SOCKET
@@ -105,9 +107,9 @@ function updateUI() {
   variables.pausa = pauseValue; // Asegura consistencia en caso de corrección
 
   const delay = document.getElementById("input-delay");
-  const delayValue = Math.min(Math.max(variables.delay, 0), 600); // Asegura que esté en rango
+  const delayValue = Math.min(Math.max(variables.retraso, 0), 600); // Asegura que esté en rango
   delay.value = delayValue;
-  variables.delay = delayValue; // Asegura consistencia en caso de corrección
+  variables.retraso = delayValue; // Asegura consistencia en caso de corrección
 
   const contador = document.getElementById("input-contador");
   const countValue = Math.min(Math.max(variables.contador, 0), 44); // Asegura que esté en rango
@@ -147,7 +149,18 @@ function updateUI() {
 
   // STATUS HANDSWITCH
   const handswitch = document.getElementById("handswitch");
-  handswitch.textContent = variables.handswitch;
+  if(variables.handswitch === "waiting"){
+    handswitch.textContent = variables.handswitch + " " + variables.pausa_actual;
+  }
+  else if(variables.handswitch === "exposure"){
+    handswitch.textContent = variables.handswitch + " " + variables.duración_actual;
+  }
+  else if(variables.handswitch === "delayed"){
+    handswitch.textContent = variables.handswitch + " " + variables.retraso_actual;
+  }
+  else{
+    handswitch.textContent = variables.handswitch;
+  }
   handswitch.classList.remove(...handswitch.classList);
   handswitch.classList.add("status", variables.handswitch);
 
@@ -168,7 +181,12 @@ function updateUI() {
   });
 
   //add active class to duration button
-  const activedurationButton = document.getElementById(`button-${variables.duration}`);
+  let name = ""
+  if (variables.duración === 5) name = "short"
+  else if (variables.duración === 15) name = "medium"
+  else if (variables.duración === 330) name = "long"
+
+  const activedurationButton = document.getElementById(`button-${name}`);
   activedurationButton.classList.add("active");
 }
 

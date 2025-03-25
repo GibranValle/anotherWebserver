@@ -129,6 +129,7 @@ h3 {
 }
 
 .visible, 
+.waiting,
 .standby{
   color: rgb(3, 120, 255);
   background-color: rgb(9, 8, 63);
@@ -136,7 +137,6 @@ h3 {
 
 .exposure,
 .calibrating,
-.waiting,
 .paused {
   color: #fff308;
   background-color: #766f09;
@@ -230,4 +230,4 @@ input[type="number"]:focus {
 
 )rawliteral";
 
-#endif // STYLES_H
+#endif  // STYLES_H

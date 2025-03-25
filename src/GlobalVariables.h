@@ -2,6 +2,7 @@
 #define GLOBALVARIABLES_H
 
 #include <map>
+#include <set>
 
 // Definiciones para valores de estado
 #define STANDBY "standby"
@@ -22,9 +23,25 @@
 #define AUTO "auto"
 
 // Definiciones para duración
-#define SHORT "short"
-#define MEDIUM "medium"
-#define LONG "long"
+#define SHORT "5"
+#define MEDIUM "15"
+#define LONG "330"
+
+/*
+Descripción de status del bot:
+RUNNING -> botón play pulsado 
+PAUSED -> botón paused pulsado
+STANDBY -> botón detener pulsado
+
+Descripción de status del HS
+STANDBY -> sin acciones ejecutando
+EXPOSURE -> RELAY Y LED ACTIVO
+OFFLINE -> sin conexión serial
+UNKNOWN -> estado inicial hasta que tenga conexión
+WAITING -> en espera del proximo disparo
+DELAYED -> en espera del temporizador de retraso
+PAUSED -> bot pausado por el usuario
+*/
 
 class GlobalVariables {
  private:
@@ -37,12 +54,18 @@ class GlobalVariables {
       {"handswitch", UNKNOWN},
       {"bot", STANDBY},
       {"modo", MANUAL},
-      {"calibration", UNKNOWN},
-      {"calibrations", "[]"},
-      {"duration", SHORT}};
+      {"calibration", UNKNOWN}};
 
   // Variables numéricas
-  std::map<String, int> numVariables{{"pausa", 30}, {"retraso", 0}, {"contador", 1}, {"total", 1}};
+  std::map<String, int> numVariables{{"duración", 5},
+                                     {"duración_actual", 0},
+                                     {"pausa", 15},
+                                     {"pausa_actual", 0},
+                                     {"retraso", 0},
+                                     {"retraso_actual", 0},
+                                     {"contador", 1},
+                                     {"total", 1},
+                                     {"calibrations", 0}};
 
  public:
   GlobalVariables() {}
@@ -55,21 +78,28 @@ class GlobalVariables {
    * Si no aparece, no se aplican restricciones.
    */
   bool isValidValue(const String &name, const String &value) const {
-    static const std::map<String, std::initializer_list<String>> validValues = {
+    static const std::map<String, std::set<String>> validValues = {
         {"generator", {STANDBY, BLOCKED, EXPOSURE, OFFLINE, UNKNOWN}},            // 5
         {"fpd", {STANDBY, EXPOSURE, OFFLINE, UNKNOWN, CALIBRATING, CALIBRATED}},  // 6
-        {"bot", {RUNNING, STANDBY, WAITING, PAUSED, DELAYED, OFFLINE, UNKNOWN}},  // 7
-        {"handswitch", {EXPOSURE, STANDBY, OFFLINE, UNKNOWN, WAITING}},           // 5
-        {"modo", {MANUAL, SEMI, AUTO}},                                           // 3
-        {"duration", {SHORT, MEDIUM, LONG}},                                      // 3
-        {"serial", {ONLINE, OFFLINE, ERROR}}                                      // 3
-        // Se ha removido "wifi" para que acepte cualquier string
+        {"bot", {RUNNING, STANDBY, PAUSED}},                                      // 3
+        {"handswitch",
+         {
+             EXPOSURE,
+             STANDBY,
+             OFFLINE,
+             UNKNOWN,
+             WAITING,
+             PAUSED,
+             DELAYED,
+         }},                                  // 7
+        {"modo", {MANUAL, SEMI, AUTO}},       // 3
+        {"serial", {ONLINE, OFFLINE, ERROR}}  // 3
+                                              // Se ha removido "wifi" para que acepte cualquier string
     };
-
     auto it = validValues.find(name);
     if (it != validValues.end()) {
       // La variable aparece en validValues; comprobar si el valor está en la lista
-      return std::find(it->second.begin(), it->second.end(), value) != it->second.end();
+      return it->second.find(value) != it->second.end();
     }
     // Si la variable no está en validValues, no tiene restricciones
     return true;
@@ -87,6 +117,7 @@ class GlobalVariables {
       if (isValidValue(name, value)) {
         variables[name] = value;
       } else {
+        Serial.println("Error: " + name + value);
         Serial.println("Error: valor inválido para '" + name + "'");
         return;
       }
@@ -94,18 +125,28 @@ class GlobalVariables {
       // Para variables de tipo numérico
       int intValue = value.toInt();
       if ((name == "pausa" && intValue >= 5 && intValue <= 600) ||
+          (name == "pausa_actual" && intValue >= 0 && intValue <= 600) ||
+          (name == "duración" && intValue >= 0 && intValue <= 330) ||
+          (name == "duración_actual" && intValue >= 0 && intValue <= 330) ||
           (name == "retraso" && intValue >= 0 && intValue <= 600) ||
+          (name == "retraso_actual" && intValue >= 0 && intValue <= 600) ||
+          (name == "calibrations" && intValue >= 0 && intValue <= 20) ||
           (name == "contador" && intValue >= 0 && intValue <= 44)) {
         numVariables[name] = intValue;
       } else {
-        Serial.println("Error: valor inválido para '" + name + "'");
+        Serial.println("Error: valor invalido para '" + name + "'");
         return;
       }
     } else {
       // Variable no reconocida
-      Serial.println("Error: variable inválida '" + name + "'");
+      Serial.println("Error: variable invalida para '" + name + "'");
       return;
     }
+  }
+
+  void sendVariable(const String &name, const String &value) {
+    if (!variables.count(name) && !numVariables.count(name)) return;
+    Serial.println("set" + name + ' ' + value);
   }
 
   std::map<String, String> getAllVariables() {

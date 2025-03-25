@@ -22,6 +22,9 @@ class WebSocketHandler {
 
     if (type == WS_EVT_CONNECT) {
       //Serial.printf("Cliente WebSocket conectado, ID: %u\n", client->id());
+      // Actualizar todas las variables al conectar
+      handler->updateAllVariables(client);
+      
       int    connected = handler->getConnectedClientsCount();
       String message   = "Websocket connected";
       String varName   = "wifi";
@@ -29,12 +32,12 @@ class WebSocketHandler {
       if (connected > 0) value = ONLINE;
       client->text(serialize(message, varName, value));
       handler->globals.updateVariable(varName, value);
+      handler->globals.sendVariable(varName, value);
 
       varName = "handswitch";
       value   = "standby";
       client->text(serialize(message, varName, value));
       handler->globals.updateVariable(varName, value);
-
     } else if (type == WS_EVT_DISCONNECT) {
       int    connected = handler->getConnectedClientsCount();
       String message   = "Websocket disconnected";
@@ -42,6 +45,8 @@ class WebSocketHandler {
       String value     = OFFLINE;
       if (connected == 0) value = OFFLINE;
       client->text(serialize(message, varName, value));
+      handler->globals.sendVariable(varName, value);
+
       //Serial.printf("Cliente WebSocket desconectado, ID: %u\n", client->id());
     } else if (type == WS_EVT_DATA) {
       String message = "";
@@ -95,6 +100,16 @@ class WebSocketHandler {
       }
     }
     return count;
+  }
+
+  void updateAllVariables(AsyncWebSocketClient* client) {
+    if (!client || client->status() != WS_CONNECTED) return;  // Añadido control de cliente
+
+    std::map<String, String> allVariables = globals.getAllVariables();
+    for (const auto& pair : allVariables) {
+      String message = "update";
+      client->text(serialize(message, pair.first, pair.second));
+    }
   }
 };
 
