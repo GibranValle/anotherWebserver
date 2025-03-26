@@ -27,6 +27,8 @@ bool ticked1 = false;
 bool ticked2 = false;
 bool qr      = true;
 
+String last_state = "";
+
 bool IRAM_ATTR timer0ISR(void *arg) {
   ticked = true;
   return true;
@@ -40,6 +42,11 @@ bool IRAM_ATTR timer1ISR(void *arg) {
 bool IRAM_ATTR timer2ISR(void *arg) {
   ticked2 = true;
   return true;
+}
+
+void updateGlobalVariable(String varName, String value) {
+  globals.updateVariable(varName, value);
+  webServer.getWebSocketHandler().broadcast(serialize("update", varName, value));
 }
 
 void setup() {
@@ -58,144 +65,116 @@ void setup() {
   webServer.begin();
 }
 
-void start_exposure() {
-  String message = "start exposure";
-  webServer.getWebSocketHandler().broadcast(serialize(message, "bot", RUNNING));
-  webServer.getWebSocketHandler().broadcast(serialize(message, "handswitch", EXPOSURE));
-  globals.updateVariable("handswitch", EXPOSURE);
-  globals.updateVariable("bot", RUNNING);
-  display.showMainFrame();
-}
-
-void start_delayed_exposure() {
-  int retraso = globals.getVariable("retraso").toInt();
-
-  if (retraso == 0) start_exposure();
-
-  int retraso_actual = globals.getVariable("retraso_actual").toInt();
-  if (retraso - retraso_actual == 0) {
-    start_exposure();
-    return;
-  }
-
-  String message = "delayed exposure";
-  webServer.getWebSocketHandler().broadcast(serialize(message, "bot", RUNNING));
-  webServer.getWebSocketHandler().broadcast(serialize(message, "handswitch", DELAYED));
-  globals.updateVariable("handswitch", DELAYED);
-  globals.updateVariable("bot", RUNNING);
-}
-
-void end_exposure() {
-  String message = "end exposure";
-  webServer.getWebSocketHandler().broadcast(serialize(message, "bot", STANDBY));
-  webServer.getWebSocketHandler().broadcast(serialize(message, "handswitch", STANDBY));
-  globals.updateVariable("handswitch", STANDBY);
-  globals.updateVariable("bot", STANDBY);
-}
-
 void loop() {
   webServer.loop();
   uartHandler.handleUART();
 
-  // LOOP FOR WIFI ONLINE AND SERIAL OFFLINE
   // THIS IS CONTROLLED WITH MCU
   if (ticked) {
-    ticked        = false;
-    String modo   = globals.getVariable("modo");
-    String bot    = globals.getVariable("bot");
-    String serial = globals.getVariable("serial");
-    String wifi   = globals.getVariable("wifi");
-    String hs     = globals.getVariable("handswitch");
-    String message;
+    ticked      = false;
+    String modo = globals.getVariable("modo");
+    String bot  = globals.getVariable("bot");
+    if (bot != RUNNING || modo != REMOTO) return;
 
-    //uint32_t interval = timer0.getInterval();
-    //timer0.stop();
-    //timer0.setInterval(5 * 1000, timer0ISR);
-    if (wifi == ONLINE || hs == EXPOSURE) {
-      display.showMainFrame();
-      message = "modo: " + modo + ", bot: " + bot + ", hs:" + hs;
-      webServer.getWebSocketHandler().broadcast(serialize(message));
-    }
+    String hs       = globals.getVariable("handswitch");
+    int    total    = globals.getVariable("total").toInt();
+    int    contador = globals.getVariable("contador").toInt();
 
-    //0)
-    if (bot == RUNNING && hs == STANDBY) {
-      // RESET 
-      globals.updateVariable("retraso_actual", "0");
-      globals.updateVariable("duración_actual", "0");
-      globals.updateVariable("pausa_actual", "0");
-      globals.updateVariable("contador", "0");
-      webServer.getWebSocketHandler().broadcast(serialize("", "retraso_actual", "0"));
-      webServer.getWebSocketHandler().broadcast(serialize("", "duración_actual", "0"));
-      webServer.getWebSocketHandler().broadcast(serialize("", "pausa_actual", "0"));
-      webServer.getWebSocketHandler().broadcast(serialize("", "contador", "0"));
+    webServer.getWebSocketHandler().broadcast(serialize("total: " + String(total) + " ,contador: " + String(contador)));
 
-      start_delayed_exposure();
+    // NO EXPOSURES LEFT, END LOOP
+    if (total - contador == 0) {
+      updateGlobalVariable("bot", STANDBY);
+      updateGlobalVariable("handswitch", STANDBY);
+      updateGlobalVariable("contador", "0");
       return;
     }
 
-    // 1)
-    if (hs == DELAYED) {
-      int retraso        = globals.getVariable("retraso").toInt();
+    // FROM STANDBY TO EXPOSURE
+    if (hs == STANDBY) {
+      // CHECK DELAY FIRST SHOT
+      if (contador > 0) {
+        updateGlobalVariable("handswitch", EXPOSURE);
+        return;
+      }
+      // CHECK DELAY
+      int retraso = globals.getVariable("retraso").toInt();
+      if (retraso == 0) {
+        updateGlobalVariable("handswitch", EXPOSURE);
+        return;
+      }
+      // DELAY OVER
       int retraso_actual = globals.getVariable("retraso_actual").toInt();
-      if (retraso == 0 || (retraso > 0 && retraso - retraso_actual == 0)) {
-        start_exposure();
+      if (retraso == 0 || retraso - retraso_actual == 0) {
+        updateGlobalVariable("handswitch", EXPOSURE);
+        updateGlobalVariable("retraso_actual", "0");
         return;
       }
-      String newValue = String(retraso_actual + 1);
-      globals.updateVariable("retraso_actual", newValue);
-      webServer.getWebSocketHandler().broadcast(serialize("", "retraso_actual", newValue));
+      // INCREMENT
+      updateGlobalVariable("retraso_actual", String(retraso_actual + 1));
+      return;
     }
 
-    // 2)
-    if (hs == EXPOSURE) {
-      int duration  = globals.getVariable("duración").toInt();
-      int segundero = globals.getVariable("duración_actual").toInt();
-      if (duration - segundero == 0) {
-        globals.updateVariable("handswitch", WAITING);
-        webServer.getWebSocketHandler().broadcast(serialize("", "handswitch", WAITING));
+    // FROM EXPOSURE TO STANDBY
+    else if (hs == EXPOSURE) {
+      int duration        = globals.getVariable("duration").toInt();
+      int duration_actual = globals.getVariable("duration_actual").toInt();
+      if (duration - duration_actual == 0) {
+        updateGlobalVariable("duration_actual", "0");
+        // END OF EXPOSURE INCREMENT COUNTER
+        updateGlobalVariable("contador", String(contador + 1));
+        updateGlobalVariable("handswitch", WAITING);
         return;
       }
-      String newValue = String(segundero + 1);
-      globals.updateVariable("duración_actual", String(segundero + 1));
-      webServer.getWebSocketHandler().broadcast(serialize("", "duración_actual", newValue));
+      // INCREMENT
+      updateGlobalVariable("duration_actual", String(duration_actual + 1));
+      return;
     }
 
-    // 3)
-    if (hs == WAITING) {
+    // FROM WAITING TO EXPOSURE
+    else if (hs == WAITING) {
       int pausa        = globals.getVariable("pausa").toInt();
       int pausa_actual = globals.getVariable("pausa_actual").toInt();
-      int contador = globals.getVariable("contador").toInt();
-      int total    = globals.getVariable("total").toInt();
-      // 4) PENDING EXPOSURES??
-      // 4.1 No -> end
-      if (total == 1 or (total > 1 && total - contador == 0)) {
-        end_exposure();
-        return;
-      }
+      webServer.getWebSocketHandler().broadcast(
+          serialize("pausa: " + String(pausa) + " ,pausa_actual: " + String(pausa_actual)));
 
-      // 4.2 yes -> next exposure
       if (pausa - pausa_actual == 0) {
-        String newValue = String(contador + 1);
-        globals.updateVariable("contador", newValue);
-        webServer.getWebSocketHandler().broadcast(serialize("", "contador", newValue));
-        start_delayed_exposure();
+        updateGlobalVariable("handswitch", EXPOSURE);
+        updateGlobalVariable("pausa_actual", "0");
+        updateGlobalVariable("duration_actual", "0");
         return;
       }
-      String newValue = String(pausa_actual + 1);
-      globals.updateVariable("pausa_actual", newValue);
-      webServer.getWebSocketHandler().broadcast(serialize("", "pausa_actual", newValue));
+      // INCREMENT
+      updateGlobalVariable("pausa_actual", String(pausa_actual + 1));
+      return;
     }
+
+    /*
+      int total    = globals.getVariable("total").toInt();
+      int retraso  = globals.getVariable("retraso").toInt();
+      int duration = globals.getVariable("duration").toInt();
+      int contador = globals.getVariable("contador").toInt();
+      
+      webServer.getWebSocketHandler().broadcast(serialize("total: " + String(total) + " ,contador: " + String(contador) +
+      " ,retraso: " + String(retraso) +
+      " ,duration: " + String(duration)));
+      */
   }
 
   // LOOP FOR PINS
   if (ticked1) {
-    ticked1   = false;
-    String hs = globals.getVariable("handswitch");
+    ticked1         = false;
+    String hs       = globals.getVariable("handswitch");
+    String modo     = globals.getVariable("modo");
+    int    total    = globals.getVariable("total").toInt();
+    int    contador = globals.getVariable("contador").toInt();
 
-    if (hs == EXPOSURE) {
+    if (hs == EXPOSURE && last_state != EXPOSURE) {
+      last_state = EXPOSURE;
       digitalWrite(LED, HIGH);
       digitalWrite(RELAY, HIGH);
-    } else {
+    } else if (hs == STANDBY) {
+      last_state = STANDBY;
       digitalWrite(LED, LOW);
       digitalWrite(RELAY, LOW);
     }
@@ -267,25 +246,22 @@ void loop() {
     else if (command.startsWith("S")) {
       String message = "S";
       Serial.println(message);
-      webServer.getWebSocketHandler().broadcast(serialize(message, "duración", SHORT));
-      globals.updateVariable("duración", SHORT);
-      start_delayed_exposure();
+      updateGlobalVariable("duración", SHORT);
+      updateGlobalVariable("handswitch", EXPOSURE);
     }
 
     else if (command.startsWith("M")) {
       String message = "M";
       Serial.println(message);
-      webServer.getWebSocketHandler().broadcast(serialize(message, "duración", MEDIUM));
-      globals.updateVariable("duración", MEDIUM);
-      start_delayed_exposure();
+      updateGlobalVariable("duración", MEDIUM);
+      updateGlobalVariable("handswitch", EXPOSURE);
     }
 
     else if (command.startsWith("L")) {
       String message = "L";
       Serial.println(message);
-      webServer.getWebSocketHandler().broadcast(serialize(message, "duración", LONG));
-      globals.updateVariable("duración", LONG);
-      start_delayed_exposure();
+      updateGlobalVariable("duración", LONG);
+      updateGlobalVariable("handswitch", EXPOSURE);
     }
 
     else if (command.startsWith("X")) {

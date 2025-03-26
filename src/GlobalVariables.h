@@ -21,6 +21,7 @@
 #define MANUAL "manual"
 #define SEMI "semi"
 #define AUTO "auto"
+#define REMOTO "remoto"
 
 // Definiciones para duración
 #define SHORT "5"
@@ -57,13 +58,13 @@ class GlobalVariables {
       {"calibration", UNKNOWN}};
 
   // Variables numéricas
-  std::map<String, int> numVariables{{"duración", 5},
-                                     {"duración_actual", 0},
+  std::map<String, int> numVariables{{"duration", 5},
+                                     {"duration_actual", 0},
                                      {"pausa", 15},
                                      {"pausa_actual", 0},
                                      {"retraso", 0},
                                      {"retraso_actual", 0},
-                                     {"contador", 1},
+                                     {"contador", 0},
                                      {"total", 1},
                                      {"calibrations", 0}};
 
@@ -91,10 +92,10 @@ class GlobalVariables {
              WAITING,
              PAUSED,
              DELAYED,
-         }},                                  // 7
-        {"modo", {MANUAL, SEMI, AUTO}},       // 3
-        {"serial", {ONLINE, OFFLINE, ERROR}}  // 3
-                                              // Se ha removido "wifi" para que acepte cualquier string
+         }},                                     // 7
+        {"modo", {MANUAL, SEMI, AUTO, REMOTO}},  // 3
+        {"serial", {ONLINE, OFFLINE, ERROR}}     // 3
+                                                 // Se ha removido "wifi" para que acepte cualquier string
     };
     auto it = validValues.find(name);
     if (it != validValues.end()) {
@@ -126,11 +127,12 @@ class GlobalVariables {
       int intValue = value.toInt();
       if ((name == "pausa" && intValue >= 5 && intValue <= 600) ||
           (name == "pausa_actual" && intValue >= 0 && intValue <= 600) ||
-          (name == "duración" && intValue >= 0 && intValue <= 330) ||
-          (name == "duración_actual" && intValue >= 0 && intValue <= 330) ||
+          (name == "duration" && intValue >= 0 && intValue <= 330) ||
+          (name == "duration_actual" && intValue >= 0 && intValue <= 330) ||
           (name == "retraso" && intValue >= 0 && intValue <= 600) ||
           (name == "retraso_actual" && intValue >= 0 && intValue <= 600) ||
           (name == "calibrations" && intValue >= 0 && intValue <= 20) ||
+          (name == "total" && intValue >= 0 && intValue <= 44) ||
           (name == "contador" && intValue >= 0 && intValue <= 44)) {
         numVariables[name] = intValue;
       } else {

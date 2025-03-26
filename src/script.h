@@ -11,8 +11,8 @@ const variables = {
   bot: "standby",
   handswitch: "unknown",
   modo: "manual",
-  duración: 5,
-  duración_actual: 0,
+  duration: 5,
+  duration_actual: 0,
   pausa: 30,
   pausa_actual: 0,
   retraso: 0,
@@ -33,53 +33,52 @@ socket.onopen = () => {
 socket.onmessage = (event) => {
   const data = JSON.parse(event.data);
   if (!data) return;
-  const {message, varName, value} = data
-  const numericKeys = ["pausa", "pausa_actual","retraso","retraso_actual", "contador","duración", "duración_actual", "total"];
+  const {message, varName, value} = data;
+  if(message)  console.log("message: ", message);
+  const numericKeys = ["pausa", "pausa_actual","retraso","retraso_actual", "contador","duration", "duration_actual", "total"];
   if (varName in variables) {
     variables[varName] = numericKeys.includes(varName) ? parseInt(value) : value;
+    console.log(varName, value);
   } 
   updateUI();
 };
 // FUNCIONES DE SOCKET
 
 function handleClick(button){
+  if(["running", "paused", "standby"].includes(button)) updateBotState(button);
+  if(button === "remoto") updateVariable("modo", "remoto")
+}
+
+function updateBotState(newState){
   bot = variables.bot;
-  if(button === "play"){
-    if(["paused", "waiting", "standby"].includes(bot)){
-      updateVariable("bot", "running");
-    }
-  }
-
-  else if(button === "pausa"){
-    if(["running", "waiting", "delayed"].includes(bot)){
-      updateVariable("bot", "paused");
-    }
-  }
-
-  else if(button === "stop"){
-    if(["running", "waiting", "delayed", "paused"].includes(bot)){
-      updateVariable("bot", "standby");
-    }
-  }
+  console.log(bot, newState);
+  // running
+  if (bot === "standby" && newState === "running") updateVariable("bot", "running")
+  else if (bot === "paused" && newState === "running") updateVariable("bot", "running")
+  // paused
+  else if (bot === "running" && newState === "paused") updateVariable("bot", "paused")
+  // stop
+  else if (bot === "running" && newState === "standby") updateVariable("bot", "standby")
+  else if (bot === "paused" && newState === "standby") updateVariable("bot", "standby")
 }
 
 function updateVariable(varName, value) {
   if (varName in variables){
     const payload = JSON.stringify({ varName, value });
-    console.log("sending socket ", payload);
     socket.send(payload);
+    console.log("sending json", varName, value);
   }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   const inputPause = document.getElementById("input-pausa");
   const inputDelay = document.getElementById("input-delay");
-  const inputCount= document.getElementById("input-contador");
+  const inputTotal= document.getElementById("input-total");
 
-  if (inputPause && inputDelay && inputCount) {
+  if (inputPause && inputDelay && inputTotal) {
     inputPause.addEventListener("blur", handleBlur);
     inputDelay.addEventListener("blur", handleBlur);
-    inputCount.addEventListener("blur", handleBlur);
+    inputTotal.addEventListener("blur", handleBlur);
   }}
 );
 
@@ -111,11 +110,14 @@ function updateUI() {
   delay.value = delayValue;
   variables.retraso = delayValue; // Asegura consistencia en caso de corrección
 
-  const contador = document.getElementById("input-contador");
-  const countValue = Math.min(Math.max(variables.contador, 0), 44); // Asegura que esté en rango
-  contador.value = countValue;
-  variables.contador = countValue; // Asegura consistencia en caso de corrección
+  const total = document.getElementById("input-total");
+  const totalValue = Math.min(Math.max(variables.total, 0), 44); // Asegura que esté en rango
+  total.value = totalValue;
+  variables.total = totalValue; // Asegura consistencia en caso de corrección
 
+  const contador = document.getElementById("contador");
+  contador.textContent = `${variables.contador} de ${variables.total}`
+  
   // MODIFICA STATUS CON CLASES
   // STATUS GEN
   const gen = document.getElementById("generator");
@@ -142,10 +144,10 @@ function updateUI() {
   wifi.classList.add("status", variables.wifi);
 
   //STATUS BOT
-  const bot = document.getElementById("bot");
-  bot.textContent = variables.bot;
-  bot.classList.remove(...bot.classList);
-  bot.classList.add("status", variables.bot);
+  const botLabel = document.getElementById("bot");
+  botLabel.textContent = variables.bot;
+  botLabel.classList.remove(...botLabel.classList);
+  botLabel.classList.add("status", variables.bot);
 
   // STATUS HANDSWITCH
   const handswitch = document.getElementById("handswitch");
@@ -153,7 +155,7 @@ function updateUI() {
     handswitch.textContent = variables.handswitch + " " + variables.pausa_actual;
   }
   else if(variables.handswitch === "exposure"){
-    handswitch.textContent = variables.handswitch + " " + variables.duración_actual;
+    handswitch.textContent = variables.handswitch + " " + variables.duration_actual;
   }
   else if(variables.handswitch === "delayed"){
     handswitch.textContent = variables.handswitch + " " + variables.retraso_actual;
@@ -164,15 +166,30 @@ function updateUI() {
   handswitch.classList.remove(...handswitch.classList);
   handswitch.classList.add("status", variables.handswitch);
 
-  // remove all hidden class in buttons
-  document.querySelectorAll("div.box.mode").forEach((div) => {
-    div.classList.remove("hidden")
-  });
+  // MODO
+  const modoLabel = document.getElementById("modo");
+  const modo = variables.modo;
+  modoLabel.textContent = modo;
 
-  //add hidden class to manual if other is selected
-  if(variables.modo !== "manual"){
-    const modoDiv = document.getElementById(`panel-manual`);
-    modoDiv.classList.add("hidden");
+  // HIDE ALL PANELS
+  document.querySelectorAll("div.box.panel").forEach((div) => {
+    div.classList.add("hidden")
+  });
+  
+  const panelManual = document.getElementById(`panel-manual`);
+  const panelVision = document.getElementById(`panel-vision`);
+  const remoteButton = document.getElementById(`button-remoto`);
+
+  // SHOW CORRECT PANEL
+  if(modo === "remoto"){
+    panelManual.classList.remove("hidden");
+    panelVision.classList.add("hidden");
+    remoteButton.classList.add("hidden");
+  }
+  else{
+    panelManual.classList.add("hidden");
+    panelVision.classList.add("hidden");
+    remoteButton.classList.remove("hidden");
   }
 
   // remove all active class in buttons
@@ -182,12 +199,39 @@ function updateUI() {
 
   //add active class to duration button
   let name = ""
-  if (variables.duración === 5) name = "short"
-  else if (variables.duración === 15) name = "medium"
-  else if (variables.duración === 330) name = "long"
+  if (variables.duration === 5) name = "short"
+  else if (variables.duration === 15) name = "medium"
+  else if (variables.duration === 330) name = "long"
 
   const activedurationButton = document.getElementById(`button-${name}`);
   activedurationButton.classList.add("active");
+
+  // remove all active class in buttons for actions
+  document.querySelectorAll("button[class^='action-button']").forEach((button) => {
+    button.classList.add("inactive-btn");
+  });
+
+  // if serial connection is closed, and modo is not remote return
+  if(modo !== "remoto" && variables.serial === "offline") return;
+
+  const button_running = document.getElementById("button-running");
+  const button_paused = document.getElementById("button-paused");
+  const button_standby = document.getElementById("button-standby");
+
+  const bot = variables.bot;
+  if(bot === "standby") {
+    button_running.classList.remove("inactive-btn");
+    button_paused.classList.remove("inactive-btn");
+    button_standby.classList.remove("inactive-btn");
+  }
+  else if(bot === "paused"){
+    button_running.classList.remove("inactive-btn");
+    button_standby.classList.remove("inactive-btn");
+  }
+  else if(bot === "running"){
+    button_paused.classList.remove("inactive-btn");
+    button_standby.classList.remove("inactive-btn");
+  }
 }
 
 )rawliteral";

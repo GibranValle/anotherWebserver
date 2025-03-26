@@ -7,7 +7,7 @@
 // ✅ Función para serializar mensajes JSON
 String serialize(String message, String varName = "", String value = "") {
   JsonDocument doc;
-  doc["mensaje"] = message;
+  doc["message"] = message;
   doc["varName"] = varName;
   doc["value"]   = value;
 

@@ -24,7 +24,7 @@ class WebSocketHandler {
       //Serial.printf("Cliente WebSocket conectado, ID: %u\n", client->id());
       // Actualizar todas las variables al conectar
       handler->updateAllVariables(client);
-      
+
       int    connected = handler->getConnectedClientsCount();
       String message   = "Websocket connected";
       String varName   = "wifi";
@@ -57,18 +57,21 @@ class WebSocketHandler {
       JsonDocument         doc;
       DeserializationError error = deserializeJson(doc, message);
       if (error) {
-        Serial.printf("Error al parsear JSON: %s\n", error.c_str());
         client->text("{\"error\":\"Formato JSON inválido\"}");
         return;
+      }
+
+      if (doc["message"].is<String>()) {
+        String msg = doc["message"];
+        client->text(serialize(msg));
       }
 
       if (doc["varName"].is<String>() && doc["value"].is<String>()) {
         String varName = doc["varName"];
         String value   = doc["value"];
-        Serial.printf("set%s %s\n", varName.c_str(), value.c_str());
+        //Serial.printf("set%s %s\n", varName.c_str(), value.c_str());
         handler->globals.updateVariable(varName, value);
-        String message = "update";
-        client->text(serialize(message, varName, value));
+        client->text(serialize("update", varName, value));
       }
     }
   }

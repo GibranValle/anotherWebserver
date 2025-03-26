@@ -64,6 +64,28 @@ class DisplayHandler {
     }
   }
 
+  void clear() {
+    tft.fillScreen(ST77XX_BLACK);  // Limpiar pantalla
+  }
+
+  void showExposure() {
+    std::map<String, String> allVars         = globals.getAllVariables();
+    String                   modo            = allVars["modo"];
+    int                      total           = allVars["total"].toInt();
+    int                      contador        = allVars["contador"].toInt();
+    int                      duration        = allVars["duración"].toInt();
+    int                      duration_actual = allVars["duración_actual"].toInt();
+
+    tft.setTextSize(3);     // Tamaño del texto
+    tft.setCursor(10, 10);  // Reiniciar cursor
+    tft.setTextColor(ST77XX_BLUE);
+    tft.println(modo);
+    tft.setTextColor(ST77XX_YELLOW);
+    tft.println("EXPOSURE " + String(duration_actual) + " / " + String(duration));
+    tft.setTextColor(ST77XX_WHITE);
+    tft.println("SHOT: " + String(contador) + " / " + String(total));
+  }
+
   void drawExposure() {
     tft.fillScreen(ST77XX_YELLOW);  // Limpiar pantalla
     delay(400);
@@ -79,23 +101,20 @@ class DisplayHandler {
   }
 
   void showMainFrame() {
-    tft.fillScreen(ST77XX_BLACK);  // Limpiar pantalla
-
-    std::map<String, String> allVars = globals.getAllVariables();
-
-    String serial       = allVars["serial"];
-    String wifi         = allVars["wifi"];
-    String generator    = allVars["generator"];
-    String fpd          = allVars["fpd"];
-    String handswitch   = allVars["handswitch"];
-    String bot          = allVars["bot"];
-    String calibration  = allVars["calibration"];
-    int    calibrations = allVars["calibrations"].toInt();
-    String duration     = allVars["duration"];
-    String str_pausa    = allVars["pausa"];
-    String str_retraso  = allVars["retraso"];
-    String str_contador = allVars["contador"];
-    String str_total    = allVars["total"];
+    std::map<String, String> allVars      = globals.getAllVariables();
+    String                   serial       = allVars["serial"];
+    String                   wifi         = allVars["wifi"];
+    String                   generator    = allVars["generator"];
+    String                   fpd          = allVars["fpd"];
+    String                   handswitch   = allVars["handswitch"];
+    String                   bot          = allVars["bot"];
+    String                   calibration  = allVars["calibration"];
+    int                      calibrations = allVars["calibrations"].toInt();
+    String                   duration     = allVars["duration"];
+    String                   str_pausa    = allVars["pausa"];
+    String                   str_retraso  = allVars["retraso"];
+    String                   str_contador = allVars["contador"];
+    String                   str_total    = allVars["total"];
     // Convertirlas a int usando toInt()
     int pausa    = str_pausa.toInt();
     int retraso  = str_retraso.toInt();

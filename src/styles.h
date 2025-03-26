@@ -159,7 +159,6 @@ h3 {
   background-color: #fff308;
 }
 
-
 .red-btn {
   background-color: #d32f2f;
 }
@@ -179,6 +178,15 @@ h3 {
   max-width: 40%;
 }
 
+.inactive-btn{
+  color: rgb(109, 113, 109);
+  background-color: rgb(55,55,55) !important;
+}
+
+.inactive-btn:hover{
+  background-color: rgb(66, 66, 66) !important;
+}
+
 .duration-button {
   background-color: #76797d;
   color: rgb(89, 86, 86);
@@ -190,6 +198,11 @@ h3 {
   font-weight: bold;
   min-width: 10px;
   max-width: 40px;
+}
+
+.full-button{
+  font-weight: bold;
+  min-width: 100%;
 }
 /* BUTTONS */
 
