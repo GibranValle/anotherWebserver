@@ -84,9 +84,9 @@ void loop() {
 
     // NO EXPOSURES LEFT, END LOOP
     if (total - contador == 0) {
-      updateGlobalVariable("bot", STANDBY);
-      updateGlobalVariable("handswitch", STANDBY);
       updateGlobalVariable("contador", "0");
+      updateGlobalVariable("handswitch", STANDBY);
+      updateGlobalVariable("bot", STANDBY);
       return;
     }
 
@@ -106,8 +106,8 @@ void loop() {
       // DELAY OVER
       int retraso_actual = globals.getVariable("retraso_actual").toInt();
       if (retraso == 0 || retraso - retraso_actual == 0) {
-        updateGlobalVariable("handswitch", EXPOSURE);
         updateGlobalVariable("retraso_actual", "0");
+        updateGlobalVariable("handswitch", EXPOSURE);
         return;
       }
       // INCREMENT
@@ -123,6 +123,12 @@ void loop() {
         updateGlobalVariable("duration_actual", "0");
         // END OF EXPOSURE INCREMENT COUNTER
         updateGlobalVariable("contador", String(contador + 1));
+        // NO EXPOSURE PENDING -> END
+        if (total - (contador + 1) == 0) {
+          updateGlobalVariable("handswitch", STANDBY);
+          return;
+        }
+        // EXPOSURE PENDING -> WAITING
         updateGlobalVariable("handswitch", WAITING);
         return;
       }

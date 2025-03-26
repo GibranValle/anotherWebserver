@@ -209,6 +209,7 @@ function updateUI() {
   // remove all active class in buttons for actions
   document.querySelectorAll("button[class^='action-button']").forEach((button) => {
     button.classList.add("inactive-btn");
+    button.disabled = true;
   });
 
   // if serial connection is closed, and modo is not remote return
@@ -221,16 +222,23 @@ function updateUI() {
   const bot = variables.bot;
   if(bot === "standby") {
     button_running.classList.remove("inactive-btn");
+    button_running.disabled = false;
     button_paused.classList.remove("inactive-btn");
+    button_paused.disabled = false;
     button_standby.classList.remove("inactive-btn");
+    button_standby.disabled = false;
   }
   else if(bot === "paused"){
     button_running.classList.remove("inactive-btn");
+    button_running.disabled = false;
     button_standby.classList.remove("inactive-btn");
+    button_standby.disabled = false;
   }
   else if(bot === "running"){
     button_paused.classList.remove("inactive-btn");
+    button_paused.disabled = false;
     button_standby.classList.remove("inactive-btn");
+    button_standby.disabled = false;
   }
 }
 

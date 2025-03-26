@@ -180,11 +180,11 @@ h3 {
 
 .inactive-btn{
   color: rgb(109, 113, 109);
-  background-color: rgb(55,55,55) !important;
+  background-color: rgb(44, 44, 44) !important;
 }
 
 .inactive-btn:hover{
-  background-color: rgb(66, 66, 66) !important;
+  background-color: rgb(44, 44, 44)!important;
 }
 
 .duration-button {

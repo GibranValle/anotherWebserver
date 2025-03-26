@@ -139,13 +139,13 @@ const char *INDEX_HTML_TEMPLATE = R"rawliteral(
 
       <div class="box-wrap">
         <button id="button-running" class="action-button green-btn" onclick="handleClick('running')">
-          &#9205;
+          ▶
         </button>
         <button id="button-paused" class="action-button yellow-btn" onclick="handleClick('paused')">
-          &#9208;
+          ❚❚
         </button>
         <button id="button-standby" class="action-button red-btn" onclick="handleClick('standby')">
-          &#9209;
+          ◼
         </button>
       </div>
     </div>
