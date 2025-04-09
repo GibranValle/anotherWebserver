@@ -15,8 +15,6 @@ const char *INDEX_HTML_TEMPLATE = R"rawliteral(
 
   </head>
   <body>
-    <div class="full-box">Robochuy</div>
-
     <!-- Conexiones Panel -->
     <div class="box">
       <div class="title">Conexiones</div>
@@ -77,21 +75,21 @@ const char *INDEX_HTML_TEMPLATE = R"rawliteral(
         <button
           id="button-short"
           class="duration-button"
-          onclick="updateVariable('duración', '5')"
+          onclick="updateVariable('duration', '5')"
         >
           Corto 5s
         </button>
         <button
           id="button-medium"
           class="duration-button"
-          onclick="updateVariable('duración', '15')"
+          onclick="updateVariable('duration', '15')"
         >
           Medio 15s
         </button>
         <button
           id="button-long"
           class="duration-button"
-          onclick="updateVariable('duración', '330')"
+          onclick="updateVariable('duration', '330')"
         >
           Largo 5m
         </button>

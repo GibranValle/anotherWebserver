@@ -111,6 +111,7 @@ void loop() {
         return;
       }
       // INCREMENT
+      display.showExposure("DELAY", total, contador, retraso, retraso_actual + 1);
       updateGlobalVariable("retraso_actual", String(retraso_actual + 1));
       return;
     }
@@ -119,6 +120,7 @@ void loop() {
     else if (hs == EXPOSURE) {
       int duration        = globals.getVariable("duration").toInt();
       int duration_actual = globals.getVariable("duration_actual").toInt();
+
       if (duration - duration_actual == 0) {
         updateGlobalVariable("duration_actual", "0");
         // END OF EXPOSURE INCREMENT COUNTER
@@ -133,6 +135,7 @@ void loop() {
         return;
       }
       // INCREMENT
+      display.showExposure("EXPOSURE", total, contador, duration, duration_actual + 1);
       updateGlobalVariable("duration_actual", String(duration_actual + 1));
       return;
     }
@@ -141,6 +144,7 @@ void loop() {
     else if (hs == WAITING) {
       int pausa        = globals.getVariable("pausa").toInt();
       int pausa_actual = globals.getVariable("pausa_actual").toInt();
+
       webServer.getWebSocketHandler().broadcast(
           serialize("pausa: " + String(pausa) + " ,pausa_actual: " + String(pausa_actual)));
 
@@ -151,20 +155,10 @@ void loop() {
         return;
       }
       // INCREMENT
+      display.showExposure("WAITING", total, contador, pausa, pausa_actual + 1);
       updateGlobalVariable("pausa_actual", String(pausa_actual + 1));
       return;
     }
-
-    /*
-      int total    = globals.getVariable("total").toInt();
-      int retraso  = globals.getVariable("retraso").toInt();
-      int duration = globals.getVariable("duration").toInt();
-      int contador = globals.getVariable("contador").toInt();
-      
-      webServer.getWebSocketHandler().broadcast(serialize("total: " + String(total) + " ,contador: " + String(contador) +
-      " ,retraso: " + String(retraso) +
-      " ,duration: " + String(duration)));
-      */
   }
 
   // LOOP FOR PINS
@@ -174,15 +168,20 @@ void loop() {
     String modo     = globals.getVariable("modo");
     int    total    = globals.getVariable("total").toInt();
     int    contador = globals.getVariable("contador").toInt();
+    String serial   = globals.getVariable("serial");
 
     if (hs == EXPOSURE && last_state != EXPOSURE) {
       last_state = EXPOSURE;
       digitalWrite(LED, HIGH);
       digitalWrite(RELAY, HIGH);
-    } else if (hs == STANDBY) {
+      if (serial == "ONLINE") display.drawExposure();
+    }
+    if (hs == STANDBY && last_state != STANDBY) {
       last_state = STANDBY;
       digitalWrite(LED, LOW);
       digitalWrite(RELAY, LOW);
+      // SELECT STAND BY DISPLAY
+      display.showMainFrame();
     }
   }
 

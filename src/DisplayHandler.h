@@ -64,26 +64,22 @@ class DisplayHandler {
     }
   }
 
-  void clear() {
+  void showExposure(String state, int total, int contador, int duration, int duration_actual) {
     tft.fillScreen(ST77XX_BLACK);  // Limpiar pantalla
-  }
+    tft.setTextSize(3);            // Tamaño del texto
+    tft.setCursor(10, 5);          // Reiniciar cursor
+    if (state == "EXPOSURE")
+      tft.setTextColor(ST77XX_YELLOW);
+    else if (state == "DELAY")
+      tft.setTextColor(ST77XX_ORANGE);
+    else if (state == "WAITING")
+      tft.setTextColor(ST77XX_BLUE);
 
-  void showExposure() {
-    std::map<String, String> allVars         = globals.getAllVariables();
-    String                   modo            = allVars["modo"];
-    int                      total           = allVars["total"].toInt();
-    int                      contador        = allVars["contador"].toInt();
-    int                      duration        = allVars["duración"].toInt();
-    int                      duration_actual = allVars["duración_actual"].toInt();
-
-    tft.setTextSize(3);     // Tamaño del texto
-    tft.setCursor(10, 10);  // Reiniciar cursor
-    tft.setTextColor(ST77XX_BLUE);
-    tft.println(modo);
+    tft.println(state);
     tft.setTextColor(ST77XX_YELLOW);
-    tft.println("EXPOSURE " + String(duration_actual) + " / " + String(duration));
+    tft.println(" TIME: " + String(duration_actual) + " / " + String(duration));
     tft.setTextColor(ST77XX_WHITE);
-    tft.println("SHOT: " + String(contador) + " / " + String(total));
+    tft.println(" SHOT: " + String(contador) + " / " + String(total));
   }
 
   void drawExposure() {
@@ -101,6 +97,8 @@ class DisplayHandler {
   }
 
   void showMainFrame() {
+    tft.fillScreen(ST77XX_BLACK);  // Limpiar pantalla
+
     std::map<String, String> allVars      = globals.getAllVariables();
     String                   serial       = allVars["serial"];
     String                   wifi         = allVars["wifi"];

@@ -34,11 +34,9 @@ socket.onmessage = (event) => {
   const data = JSON.parse(event.data);
   if (!data) return;
   const {message, varName, value} = data;
-  if(message)  console.log("message: ", message);
   const numericKeys = ["pausa", "pausa_actual","retraso","retraso_actual", "contador","duration", "duration_actual", "total"];
   if (varName in variables) {
     variables[varName] = numericKeys.includes(varName) ? parseInt(value) : value;
-    console.log(varName, value);
   } 
   updateUI();
 };
@@ -51,7 +49,6 @@ function handleClick(button){
 
 function updateBotState(newState){
   bot = variables.bot;
-  console.log(bot, newState);
   // running
   if (bot === "standby" && newState === "running") updateVariable("bot", "running")
   else if (bot === "paused" && newState === "running") updateVariable("bot", "running")
@@ -176,19 +173,19 @@ function updateUI() {
     div.classList.add("hidden")
   });
   
+  // show panel vision
+  document.getElementById(`panel-vision`).classList.remove("hidden");
+
   const panelManual = document.getElementById(`panel-manual`);
-  const panelVision = document.getElementById(`panel-vision`);
   const remoteButton = document.getElementById(`button-remoto`);
 
   // SHOW CORRECT PANEL
   if(modo === "remoto"){
     panelManual.classList.remove("hidden");
-    panelVision.classList.add("hidden");
     remoteButton.classList.add("hidden");
   }
   else{
     panelManual.classList.add("hidden");
-    panelVision.classList.add("hidden");
     remoteButton.classList.remove("hidden");
   }
 

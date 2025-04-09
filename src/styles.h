@@ -21,14 +21,14 @@ html {
 
 body {
   display: flex;
-  flex-direction: column;
   flex: 1 1 100px;
   width: 100%;
-  padding: 20px;
-  gap: 20px;
+  padding: 15px;
+  gap: 15px;
   max-width: 800px;
   align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
 }
 
 button {
@@ -61,18 +61,18 @@ h3 {
   width: 100%;
   font-weight: bold;
   text-align: center;
-  font-size: 22pt;
+  font-size: 20pt;
 }
 
 .box {
-  flex: 1 1 100px;
+  flex: 1 1 200px;
   background: #444;
   border-radius: 5px;
   padding: 10px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  max-width: 600px;
+  gap: 8px;
+  max-width: 380px;
   min-width: 320px;
 }
 
@@ -81,7 +81,7 @@ h3 {
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  gap: 5px;
+  gap: 3px;
 }
 
 .title {
