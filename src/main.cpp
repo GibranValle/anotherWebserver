@@ -251,21 +251,21 @@ void loop() {
     else if (command.startsWith("S")) {
       String message = "S";
       Serial.println(message);
-      updateGlobalVariable("duración", SHORT);
+      updateGlobalVariable("duration", SHORT);
       updateGlobalVariable("handswitch", EXPOSURE);
     }
 
     else if (command.startsWith("M")) {
       String message = "M";
       Serial.println(message);
-      updateGlobalVariable("duración", MEDIUM);
+      updateGlobalVariable("duration", MEDIUM);
       updateGlobalVariable("handswitch", EXPOSURE);
     }
 
     else if (command.startsWith("L")) {
       String message = "L";
       Serial.println(message);
-      updateGlobalVariable("duración", LONG);
+      updateGlobalVariable("duration", LONG);
       updateGlobalVariable("handswitch", EXPOSURE);
     }
 
@@ -287,7 +287,7 @@ void loop() {
       Serial.println("bot: [running, paused, waiting, delayed, standby, offline, unknown])");  // 7
       Serial.println("handswitch: [standby, exposure, offline, unknown, waiting])");           // 5
       Serial.println("modo: [manual, semi, auto])");                                           // 3
-      Serial.println("duración: [5-330])");                                                    // 3
+      Serial.println("duration: [5-330])");                                                    // 3
       Serial.println("pausa: [5-600])");
       Serial.println("delay: [5-600])");
       Serial.println("contador: [1-100])");

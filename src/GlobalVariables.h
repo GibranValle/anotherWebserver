@@ -22,6 +22,19 @@
 #define SEMI "semi"
 #define AUTO "auto"
 #define REMOTO "remoto"
+#define OFFSET "offset"
+#define DEFECT "defect"
+#define DEFECT_SOLID "defect_solid"
+#define PIXEL_DEFECT "pixel_defect"
+#define SHADING "shading"
+#define UNIFORMITY "uniformity"
+#define DEFECT_SOLID_STEREO "defect_solid_stereo"
+#define DEFECT_SOLID_BIOPSY "defect_solid_biopsy"
+#define DEFECT_SOLID_TOMO "defect_solid_tomo"
+#define UNIFORMITY_STEREO "uniformity_stereo"
+#define UNIFORMITY_BIOPSY "uniformity_biopsy"
+#define UNIFORMITY_TOMO "uniformity_tomo"
+#define UNIFORMITY_ES "uniformity_es"
 
 // Definiciones para duración
 #define SHORT "5"
@@ -92,7 +105,21 @@ class GlobalVariables {
              WAITING,
              PAUSED,
              DELAYED,
-         }},                                     // 7
+         }},  // 7
+        {"calibration",
+         {UNKNOWN,
+          DEFECT,
+          DEFECT_SOLID,
+          PIXEL_DEFECT,
+          SHADING,
+          UNIFORMITY,
+          DEFECT_SOLID_TOMO,
+          DEFECT_SOLID_BIOPSY,
+          DEFECT_SOLID_STEREO,
+          UNIFORMITY_TOMO,
+          UNIFORMITY_STEREO,
+          UNIFORMITY_BIOPSY,
+          UNIFORMITY_ES}},                       // 13
         {"modo", {MANUAL, SEMI, AUTO, REMOTO}},  // 3
         {"serial", {ONLINE, OFFLINE, ERROR}}     // 3
                                                  // Se ha removido "wifi" para que acepte cualquier string
