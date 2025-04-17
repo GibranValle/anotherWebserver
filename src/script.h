@@ -128,6 +128,10 @@ function updateUI() {
   fpd.classList.add("status", variables.fpd);
   fpd.textContent = variables.fpd;
 
+  //Calibration
+  const calibration = document.getElementById("calibration");
+  calibration.textContent = variables.calibration;
+
   // STATUS SERIAL
   const serial = document.getElementById("serial");
   serial.textContent = variables.serial;

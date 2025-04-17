@@ -118,7 +118,8 @@ h3 {
 }
 
 .online,
-.running {
+.running, 
+.calibrated {
   color: rgb(0, 255, 0);
   background-color: rgb(47, 100, 20);
 }
